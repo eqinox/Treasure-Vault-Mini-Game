@@ -11,7 +11,7 @@ A fun and interactive vault unlocking mini-game built with PIXI.js and GSAP. Pla
 
 1. **Clone the repository** (if you haven't already):
 ```bash
-git clone <https://github.com/eqinox/Treasure-Vault-Mini-Game.git>
+git clone https://github.com/eqinox/Treasure-Vault-Mini-Game.git
 cd Treasure-Vault-Mini-Game
 ```
 
