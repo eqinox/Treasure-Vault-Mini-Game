@@ -3,6 +3,7 @@ import { SceneUtils } from "../core/App";
 import { VaultDoor } from "../components/VaultDoor";
 import { VaultHandle } from "../components/VaultHandle";
 import { GlitterEffect } from "../components/GlitterEffect";
+import { Timer } from "../components/Timer";
 
 interface Combination {
   number: number;
@@ -15,6 +16,7 @@ export default class Game extends Container {
   private vaultDoor!: VaultDoor;
   private vaultHandle!: VaultHandle;
   private glitterEffect!: GlitterEffect;
+  private timer!: Timer;
   
   // Game state
   private secretCombination: Combination[] = [];
@@ -44,10 +46,12 @@ export default class Game extends Container {
     this.glitterEffect = new GlitterEffect();
     this.glitterEffect.alpha = 0;
     
+    this.timer = new Timer();
+    
     this.resize(window.innerWidth, window.innerHeight);
 
     // Add all elements in correct order
-    this.addChild(this.background, this.vaultDoor, this.vaultHandle, this.glitterEffect);
+    this.addChild(this.background, this.vaultDoor, this.vaultHandle, this.glitterEffect, this.timer);
 
     // Setup handle interaction
     this.vaultHandle.setupInteraction(this.onHandleClick.bind(this));
@@ -60,9 +64,13 @@ export default class Game extends Container {
     this.rotationsInCurrentDirection = 0;
     this.secretCombination = [];
 
+    // Reset and start timer
+    this.timer.reset();
+    this.timer.start();
+
     // Generate 3 random combinations
     for (let i = 0; i < this.numberOfCombinations; i++) {
-      const number = Math.floor(Math.random() * this.numberOfMaxSpinLength) + 1;
+      const number = Math.floor(Math.random() * this.numberOfMaxSpinLength) + 1; // 1-9
       const direction = Math.random() < 0.5 ? "clockwise" : "counterclockwise";
       this.secretCombination.push({ number, direction });
     }
@@ -111,12 +119,18 @@ export default class Game extends Container {
   private async onSuccess() {
     console.log("Success! The vault unlocks!");
     
+    // Stop timer and log the time
+    this.timer.stop();
+    const elapsedTime = this.timer.getElapsedTime();
+    const seconds = (elapsedTime / 1000).toFixed(2);
+    console.log(`Vault unlocked in ${seconds} seconds!`);
+    
     // Open the vault door
     await this.vaultDoor.open();
 
-    // Trigger glitter effect and wait for it to complete
+    // Trigger glitter effect
     this.glitterEffect.alpha = 1;
-    await this.glitterEffect.play(); 
+    await this.glitterEffect.play();
 
     // After 5 seconds, close the door and reset
     setTimeout(async () => {
@@ -157,6 +171,9 @@ export default class Game extends Container {
       width / 3,
       height / 4.5
     );
+
+    // Position timer on the left side
+    this.timer.setPosition(20, 20);
   }
 
   onResize(width: number, height: number) {
