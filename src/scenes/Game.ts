@@ -1,6 +1,7 @@
-import { Container, Sprite, FederatedPointerEvent, Text } from "pixi.js";
+import { Container, Sprite } from "pixi.js";
 import { SceneUtils } from "../core/App";
-import gsap from "gsap";
+import { VaultDoor } from "../components/VaultDoor";
+import { VaultHandle } from "../components/VaultHandle";
 
 interface Combination {
   number: number;
@@ -10,16 +11,15 @@ interface Combination {
 export default class Game extends Container {
   name = "Treasure Vault";
   private background!: Sprite;
-  private door!: Sprite;
-  private handle!: Sprite;
-  private handleShadow!: Sprite;
-  private statusText!: Text;
+  private vaultDoor!: VaultDoor;
+  private vaultHandle!: VaultHandle;
   
   // Game state
-  private isRotating = false;
   private secretCombination: Combination[] = [];
   private currentStep = 0;
   private rotationsInCurrentDirection = 0;
+
+  private numberOfCombinations = 1;
 
   constructor(protected utils: SceneUtils) {
     super();
@@ -33,28 +33,18 @@ export default class Game extends Container {
     this.removeChildren();
 
     this.background = Sprite.from("/assets/bg.png");
-    this.door = Sprite.from("/assets/door.png");
-    this.handleShadow = Sprite.from("/assets/handleShadow.png");
-    this.handle = Sprite.from("/assets/handle.png");
-    
-    this.handle.anchor.set(0.5);
-    this.handleShadow.anchor.set(0.5);
 
-    this.statusText = new Text("", {
-      fontFamily: "Arial",
-      fontSize: 24,
-      fill: "white",
-      align: "center"
-    });
-    this.statusText.anchor.set(0.5);
+    this.vaultDoor = new VaultDoor();
+    this.vaultHandle = new VaultHandle();
+    this.vaultDoor.setHandle(this.vaultHandle);
     
     this.resize(window.innerWidth, window.innerHeight);
 
-    this.addChild(this.background, this.door, this.handleShadow, this.handle, this.statusText);
+    // Add all elements in correct order
+    this.addChild(this.background, this.vaultDoor, this.vaultHandle);
 
-    this.handle.eventMode = 'static';
-    this.handle.cursor = 'pointer';
-    this.handle.on('pointerdown', this.onHandleClick.bind(this));
+    // Setup handle interaction
+    this.vaultHandle.setupInteraction(this.onHandleClick.bind(this));
 
     this.generateSecretCombination();
   }
@@ -63,21 +53,18 @@ export default class Game extends Container {
     this.currentStep = 0;
     this.rotationsInCurrentDirection = 0;
     this.secretCombination = [];
-    this.statusText.text = "";
 
     // Generate 3 random combinations
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < this.numberOfCombinations; i++) {
       const number = Math.floor(Math.random() * 9) + 1; // 1-9
       const direction = Math.random() < 0.5 ? "clockwise" : "counterclockwise";
       this.secretCombination.push({ number, direction });
     }
 
-    // Log the combination to console
     console.log("Secret combination:", this.secretCombination.map(c => 
       `${c.number} ${c.direction}`
     ).join(", "));
 
-    // Log current step to console
     this.logCurrentStep();
   }
 
@@ -88,45 +75,9 @@ export default class Game extends Container {
     }
   }
 
-  private onHandleClick(event: FederatedPointerEvent) {
-    if (this.isRotating) return;
-
-    const clickX = event.global.x;
-    const handleCenterX = this.handle.getGlobalPosition().x;
-    const direction = clickX < handleCenterX ? "counterclockwise" : "clockwise";
-    
-    this.rotateHandle(direction);
-  }
-
-  private rotateHandle(direction: "clockwise" | "counterclockwise") {
-    this.isRotating = true;
-
-    const rotationAmount = direction === "clockwise" ? Math.PI / 3 : -Math.PI / 3;
-    const currentRotation = this.handle.rotation;
-    const targetRotation = currentRotation + rotationAmount;
-
-    // Create a timeline for synchronized animations
-    const tl = gsap.timeline({
-      onComplete: () => {
-        this.isRotating = false;
-        this.statusText.text = "";
-        this.checkCombination(direction);
-      }
-    });
-
-    // Animate handle with a quick ease-out
-    tl.to(this.handle, {
-      rotation: targetRotation,
-      duration: 0.5,
-      ease: "power2.out"
-    });
-
-    // Animate shadow with a slight delay and slower movement
-    tl.to(this.handleShadow, {
-      rotation: targetRotation,
-      duration: 0.51, // Slightly longer duration
-      ease: "power1.out", // Different easing for shadow
-    }, "-=0.50"); // Start slightly after handle starts moving
+  private async onHandleClick(direction: "clockwise" | "counterclockwise") {
+    await this.vaultHandle.rotate(direction);
+    this.checkCombination(direction);
   }
 
   private checkCombination(direction: "clockwise" | "counterclockwise") {
@@ -151,73 +102,54 @@ export default class Game extends Container {
     }
   }
 
-  private onSuccess() {
+  private async onSuccess() {
     console.log("Success! The vault unlocks!");
-
-    // TODO: Add the animation for the vault opening
-  }
-
-  private onFailure() {
-    this.statusText.text = "❌ Wrong move! Resetting... ❌";
-    console.log("Wrong combination! Resetting...");
     
-    this.isRotating = true;
+    // Open the vault door
+    await this.vaultDoor.open();
 
-    // Create a timeline for the crazy spin
-    const tl = gsap.timeline({
-      onComplete: () => {
-        this.isRotating = false;
-        this.statusText.text = "";
-        this.generateSecretCombination();
-      }
-    });
-
-    // Spin handle rapidly
-    tl.to(this.handle, {
-      rotation: this.handle.rotation + Math.PI * 4,
-      duration: 1,
-      ease: "power2.inOut"
-    });
-
-    // Shadow follows with more exaggerated delay
-    tl.to(this.handleShadow, {
-      rotation: this.handle.rotation + Math.PI * 4,
-      duration: 1.1,
-      ease: "power1.inOut"
-    }, "-=0.99");
+    // After 5 seconds, close the door and reset
+    setTimeout(async () => {
+      await this.vaultDoor.close();
+      await this.vaultHandle.spinCrazy();
+      this.generateSecretCombination();
+    }, 5000);
   }
 
-  update(_delta: number) {
-    // Will add additional game logic here later
+  private async onFailure() {
+    console.log("Wrong combination! Resetting...");
+    await this.vaultHandle.spinCrazy();
+    this.generateSecretCombination();
   }
 
   private resize(width: number, height: number) {
     this.background.width = width;
     this.background.height = height;
 
-    const doorScale = (height * 0.60) / this.door.height;
-    this.door.scale.set(doorScale);
+    // Size the door to be big enough to cover the vault
+    const doorScale = (height * 0.60) / this.vaultDoor.height;
 
-    this.door.x = (width - this.door.width) / 1.95;
-    this.door.y = (height - this.door.height) / 2.1;
+    // Center the door to be in the middle of the vault
+    this.vaultDoor.setScale(doorScale);
+    this.vaultDoor.setPosition(
+      (width - this.vaultDoor.width) / 1.95,
+      (height - this.vaultDoor.height) / 2.1
+    );
 
-    this.handle.scale.set(doorScale);
-    this.handleShadow.scale.set(doorScale);
-
-    const handleOffsetX = this.door.width * 0.46;
-    const handleOffsetY = this.door.height * 0.5;
-
-    this.handle.x = this.door.x + handleOffsetX;
-    this.handle.y = this.door.y + handleOffsetY;
-    
-    this.handleShadow.x = this.handle.x;
-    this.handleShadow.y = this.handle.y;
-
-    this.statusText.x = width / 2;
-    this.statusText.y = 50;
+    // Position handle relative to door
+    this.vaultHandle.setScale(doorScale);
+    this.vaultHandle.setPosition(
+      this.vaultDoor.x + this.vaultDoor.width * 0.457,
+      this.vaultDoor.y + this.vaultDoor.height * 0.5
+    );
   }
 
   onResize(width: number, height: number) {
     this.resize(width, height);
+  }
+
+  update(delta: number) {
+    // This method is required by the PIXI.js ticker
+    // We can use it later for continuous animations if needed
   }
 }
