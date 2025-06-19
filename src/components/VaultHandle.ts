@@ -68,8 +68,9 @@ export class VaultHandle extends Container {
 
         // Animate shadow with a slight delay and slower movement
         tl.to(this.handleShadow, {
+            alpha: 0.5,
             rotation: targetRotation,
-            duration: 0.51,
+            duration: 0.48,
             ease: "power1.out",
         }, "-=0.50");
 
@@ -97,8 +98,9 @@ export class VaultHandle extends Container {
 
         // Shadow follows with more exaggerated delay
         tl.to(this.handleShadow, {
+            alpha: 0.3,
             rotation: this.handle.rotation + Math.PI * 4,
-            duration: 1.1,
+            duration: 1,
             ease: "power1.inOut"
         }, "-=0.99");
 
