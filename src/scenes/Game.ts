@@ -2,6 +2,7 @@ import { Container, Sprite } from "pixi.js";
 import { SceneUtils } from "../core/App";
 import { VaultDoor } from "../components/VaultDoor";
 import { VaultHandle } from "../components/VaultHandle";
+import { GlitterEffect } from "../components/GlitterEffect";
 
 interface Combination {
   number: number;
@@ -13,13 +14,15 @@ export default class Game extends Container {
   private background!: Sprite;
   private vaultDoor!: VaultDoor;
   private vaultHandle!: VaultHandle;
+  private glitterEffect!: GlitterEffect;
   
   // Game state
   private secretCombination: Combination[] = [];
   private currentStep = 0;
   private rotationsInCurrentDirection = 0;
 
-  private numberOfCombinations = 1;
+  private numberOfCombinations = 3;
+  private numberOfMaxSpinLength = 9;
 
   constructor(protected utils: SceneUtils) {
     super();
@@ -38,10 +41,13 @@ export default class Game extends Container {
     this.vaultHandle = new VaultHandle();
     this.vaultDoor.setHandle(this.vaultHandle);
     
+    this.glitterEffect = new GlitterEffect();
+    this.glitterEffect.alpha = 0;
+    
     this.resize(window.innerWidth, window.innerHeight);
 
     // Add all elements in correct order
-    this.addChild(this.background, this.vaultDoor, this.vaultHandle);
+    this.addChild(this.background, this.vaultDoor, this.vaultHandle, this.glitterEffect);
 
     // Setup handle interaction
     this.vaultHandle.setupInteraction(this.onHandleClick.bind(this));
@@ -56,7 +62,7 @@ export default class Game extends Container {
 
     // Generate 3 random combinations
     for (let i = 0; i < this.numberOfCombinations; i++) {
-      const number = Math.floor(Math.random() * 9) + 1; // 1-9
+      const number = Math.floor(Math.random() * this.numberOfMaxSpinLength) + 1;
       const direction = Math.random() < 0.5 ? "clockwise" : "counterclockwise";
       this.secretCombination.push({ number, direction });
     }
@@ -108,6 +114,10 @@ export default class Game extends Container {
     // Open the vault door
     await this.vaultDoor.open();
 
+    // Trigger glitter effect and wait for it to complete
+    this.glitterEffect.alpha = 1;
+    await this.glitterEffect.play(); 
+
     // After 5 seconds, close the door and reset
     setTimeout(async () => {
       await this.vaultDoor.close();
@@ -141,6 +151,11 @@ export default class Game extends Container {
     this.vaultHandle.setPosition(
       this.vaultDoor.x + this.vaultDoor.width * 0.457,
       this.vaultDoor.y + this.vaultDoor.height * 0.5
+    );
+    
+    this.glitterEffect.setPosition(
+      width / 3,
+      height / 4.5
     );
   }
 
