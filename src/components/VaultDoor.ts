@@ -1,6 +1,7 @@
 import { Container, Sprite } from "pixi.js";
 import gsap from "gsap";
 import { VaultHandle } from "./VaultHandle";
+import { GAME_CONFIG } from "../utils/config";
 
 export class VaultDoor extends Container {
     private door: Sprite;
@@ -53,7 +54,7 @@ export class VaultDoor extends Container {
         if (this.handle) {
             tl.to(this.handle, {
                 alpha: 0,
-                duration: 0.3,
+                duration: GAME_CONFIG.HANDLE_FADE_DURATION,
                 ease: "power2.inOut"
             });
         }
@@ -61,20 +62,20 @@ export class VaultDoor extends Container {
         // Simultaneously move door and fade in open state
         tl.to(this, {
             x: openX,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
             ease: "power2.inOut"
         });
 
         // Fade in open door and shadow while fading out closed door
         tl.to([this.openDoor, this.openShadow], {
             alpha: 1,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
             ease: "power2.inOut"
         }, "-=0.5");
 
         tl.to(this.door, {
             alpha: 0,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
             ease: "power2.inOut"
         }, "-=0.5");
 
@@ -93,20 +94,20 @@ export class VaultDoor extends Container {
         // Move back to closed position while fading
         tl.to(this, {
             x: this.closedX,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
             ease: "power2.inOut"
         });
 
         // Fade out open door and shadow while fading in closed door
         tl.to([this.openDoor, this.openShadow], {
             alpha: 0,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
             ease: "power2.inOut"
         }, "-=0.5");
 
         tl.to(this.door, {
             alpha: 1,
-            duration: 0.5,
+            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
             ease: "power2.inOut"
         }, "-=0.5");
 
@@ -114,7 +115,7 @@ export class VaultDoor extends Container {
         if (this.handle) {
             tl.to(this.handle, {
                 alpha: 1,
-                duration: 0.3,
+                duration: GAME_CONFIG.HANDLE_FADE_DURATION,
                 ease: "power2.inOut"
             });
         }

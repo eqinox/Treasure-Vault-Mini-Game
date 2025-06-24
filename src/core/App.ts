@@ -1,6 +1,7 @@
 import { Application } from "pixi.js";
 import AssetLoader from "./AssetLoader";
 import Game from "../scenes/Game";
+import { GAME_CONFIG } from "../utils/config";
 
 export interface SceneUtils {
   assetLoader: AssetLoader;
@@ -16,7 +17,7 @@ export default class App extends Application {
       autoDensity: true,
       resizeTo: window,
       powerPreference: "high-performance",
-      backgroundColor: 0x23272a,
+      backgroundColor: GAME_CONFIG.BACKGROUND_COLOR,
     });
 
     const sceneUtils = {

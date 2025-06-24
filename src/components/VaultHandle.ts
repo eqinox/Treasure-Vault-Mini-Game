@@ -1,5 +1,6 @@
 import { Container, Sprite, FederatedPointerEvent } from "pixi.js";
 import gsap from "gsap";
+import { GAME_CONFIG, Direction } from "../utils/config";
 
 export class VaultHandle extends Container {
     private handle: Sprite;
@@ -32,7 +33,7 @@ export class VaultHandle extends Container {
         this.y = y;
     }
 
-    public setupInteraction(onClick: (direction: "clockwise" | "counterclockwise") => void) {
+    public setupInteraction(onClick: (direction: Direction) => void) {
         this.handle.on('pointerdown', (event: FederatedPointerEvent) => {
             if (this.isRotating) return;
 
@@ -44,11 +45,11 @@ export class VaultHandle extends Container {
         });
     }
 
-    public async rotate(direction: "clockwise" | "counterclockwise") {
+    public async rotate(direction: Direction) {
         if (this.isRotating) return;
         this.isRotating = true;
 
-        const rotationAmount = direction === "clockwise" ? Math.PI / 3 : -Math.PI / 3;
+        const rotationAmount = direction === "clockwise" ? GAME_CONFIG.HANDLE_ROTATION_AMOUNT : -GAME_CONFIG.HANDLE_ROTATION_AMOUNT;
         const currentRotation = this.handle.rotation;
         const targetRotation = currentRotation + rotationAmount;
 
@@ -62,15 +63,15 @@ export class VaultHandle extends Container {
         // Animate handle with a quick ease-out
         tl.to(this.handle, {
             rotation: targetRotation,
-            duration: 0.5,
+            duration: GAME_CONFIG.HANDLE_ROTATION_DURATION,
             ease: "power2.out"
         });
 
         // Animate shadow with a slight delay and slower movement
         tl.to(this.handleShadow, {
-            alpha: 0.5,
+            alpha: GAME_CONFIG.SHADOW_ALPHA,
             rotation: targetRotation,
-            duration: 0.48,
+            duration: GAME_CONFIG.HANDLE_ROTATION_DURATION,
             ease: "power1.out",
         }, "-=0.50");
 
@@ -91,16 +92,16 @@ export class VaultHandle extends Container {
 
         // Spin handle like crazy
         tl.to(this.handle, {
-            rotation: this.handle.rotation + Math.PI * 4,
-            duration: 1,
+            rotation: this.handle.rotation + Math.PI * GAME_CONFIG.HANDLE_SPIN_ROTATIONS,
+            duration: GAME_CONFIG.HANDLE_SPIN_DURATION,
             ease: "power2.inOut"
         });
 
         // Shadow follows with more exaggerated delay
         tl.to(this.handleShadow, {
             alpha: 0.3,
-            rotation: this.handle.rotation + Math.PI * 4,
-            duration: 1,
+            rotation: this.handle.rotation + Math.PI * GAME_CONFIG.HANDLE_SPIN_ROTATIONS,
+            duration: GAME_CONFIG.HANDLE_SPIN_DURATION,
             ease: "power1.inOut"
         }, "-=0.99");
 
