@@ -39,7 +39,7 @@ export class VaultHandle extends Container {
 
             const clickX = event.global.x;
             const handleCenterX = this.handle.getGlobalPosition().x;
-            const direction = clickX < handleCenterX ? "counterclockwise" : "clockwise";
+            const direction = clickX < handleCenterX ? Direction.COUNTERCLOCKWISE : Direction.CLOCKWISE;
             
             onClick(direction);
         });
@@ -49,7 +49,7 @@ export class VaultHandle extends Container {
         if (this.isRotating) return;
         this.isRotating = true;
 
-        const rotationAmount = direction === "clockwise" ? GAME_CONFIG.HANDLE_ROTATION_AMOUNT : -GAME_CONFIG.HANDLE_ROTATION_AMOUNT;
+        const rotationAmount = direction === Direction.CLOCKWISE ? GAME_CONFIG.HANDLE_ROTATION_AMOUNT : -GAME_CONFIG.HANDLE_ROTATION_AMOUNT;
         const currentRotation = this.handle.rotation;
         const targetRotation = currentRotation + rotationAmount;
 

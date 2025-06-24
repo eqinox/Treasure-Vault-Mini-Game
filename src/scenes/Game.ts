@@ -4,13 +4,11 @@ import { VaultDoor } from "../components/VaultDoor";
 import { VaultHandle } from "../components/VaultHandle";
 import { GlitterEffect } from "../components/GlitterEffect";
 import { Timer } from "../components/Timer";
-import { GAME_CONFIG, Direction } from "../utils/config";
-import gsap from "gsap";
-
-interface Combination {
-  number: number;
-  direction: Direction;
-}
+import { GAME_CONFIG, Direction, GameStatus } from "../utils/config";
+import { Combination } from "../utils/types/Combination";
+import { GameState } from "../utils/types/GameState";
+import { CombinationResult } from "../utils/types/CombinationResult";
+import { wait } from "../utils/wait";
 
 export default class Game extends Container {
   name = "Treasure Vault";
@@ -21,9 +19,12 @@ export default class Game extends Container {
   private timer!: Timer;
   
   // Game state
-  private secretCombination: Combination[] = [];
-  private currentStep = 0;
-  private rotationsInCurrentDirection = 0;
+  private gameState: GameState = {
+    currentStep: 0,
+    rotationsInCurrentDirection: 0,
+    secretCombination: [],
+    gameStatus: GameStatus.NORMAL
+  };
 
   constructor(protected utils: SceneUtils) {
     super();
@@ -55,98 +56,96 @@ export default class Game extends Container {
     // Setup handle interaction
     this.vaultHandle.setupInteraction(this.onHandleClick.bind(this));
 
-    this.generateSecretCombination();
-  }
-
-  private generateSecretCombination() {
-    this.currentStep = 0;
-    this.rotationsInCurrentDirection = 0;
-    this.secretCombination = [];
-
-    // Reset and start timer
-    this.timer.reset();
     this.timer.start();
-
-    // Generate random combinations
-    for (let i = 0; i < GAME_CONFIG.NUMBER_OF_COMBINATIONS; i++) {
-      const number = Math.floor(Math.random() * GAME_CONFIG.MAX_SPIN_LENGTH) + 1; // 1-9
-      const direction = Math.random() < 0.5 ? "clockwise" : "counterclockwise";
-      this.secretCombination.push({ number, direction });
-    }
-
-    console.log("Secret combination:", this.secretCombination.map(c => 
-      `${c.number} ${c.direction}`
-    ).join(", "));
-
+    this.gameState.secretCombination = Combination.generateSecretCombination();
+    this.logSecretCombination();
     this.logCurrentStep();
   }
 
-  private logCurrentStep() {
-    if (this.currentStep < this.secretCombination.length) {
-      const current = this.secretCombination[this.currentStep];
-      console.log(`Current step ${this.currentStep + 1}: ${current.number} ${current.direction} (${this.rotationsInCurrentDirection} rotations made)`);
-    }
+  private resetSecretCombination() {
+    this.gameState.currentStep = 0;
+    this.gameState.rotationsInCurrentDirection = 0;
+    this.gameState.secretCombination = Combination.generateSecretCombination();
+    this.gameState.gameStatus = GameStatus.NORMAL;
   }
 
   private async onHandleClick(direction: Direction) {
-    await this.vaultHandle.rotate(direction);
-    this.checkCombination(direction);
-  }
-
-  private checkCombination(direction: Direction) {
-    const expectedMove = this.secretCombination[this.currentStep];
+    await this.vaultHandle.rotate(direction);    
     
-    if (direction === expectedMove.direction) {
-      this.rotationsInCurrentDirection++;
-      this.logCurrentStep();
-
-      if (this.rotationsInCurrentDirection === expectedMove.number) {
-        this.currentStep++;
-        this.rotationsInCurrentDirection = 0;
-        
-        if (this.currentStep === this.secretCombination.length) {
-          this.onSuccess();
-        } else {
-          this.logCurrentStep();
-        }
-      }
-    } else {
-      this.onFailure();
+    const result: CombinationResult = Combination.checkCombination(this.gameState, direction);
+    
+    this.updateGameState(result);
+    this.logCurrentStep();
+    
+    if (this.gameState.gameStatus === GameStatus.WIN) {
+      await this.handleWin();
+      this.resetSecretCombination();
+      this.logSecretCombination();
+      this.timer.start();
+    } else if (this.gameState.gameStatus === GameStatus.FAILURE) {
+      await this.handleFailure();
+      this.resetSecretCombination();
+      this.logSecretCombination();
     }
   }
 
-  private async onSuccess() {
-    console.log("Success! The vault unlocks!");
+  private logSecretCombination() {
+    console.log("Secret combination:",this.gameState.secretCombination.map(c => c.toString()).join(", "));
+  }
+
+  private updateGameState(result: CombinationResult) {
+    if (result.isValid) {
+      this.gameState.rotationsInCurrentDirection++;
+      
+      if (result.shouldAdvance) {
+        this.gameState.currentStep++;
+        this.gameState.rotationsInCurrentDirection = 0;
+        
+        if (result.shouldComplete) {
+          this.gameState.gameStatus = GameStatus.WIN;
+        }
+      }
+    } else {
+      this.gameState.gameStatus = GameStatus.FAILURE;
+    }
+  }
+
+  private logCurrentStep() {
+    const { currentStep, secretCombination, rotationsInCurrentDirection, gameStatus } = this.gameState;
     
-    // Stop timer and log the time
+    switch (gameStatus) {
+      case GameStatus.WIN:
+        const elapsedTime = this.timer.getElapsedTime();
+        const seconds = (elapsedTime / 1000).toFixed(2);
+        console.log(`Vault unlocked in ${seconds} seconds!`);
+        break;
+      case GameStatus.FAILURE:
+        console.log("Wrong combination! Resetting...");
+        break;
+      case GameStatus.NORMAL:
+        if (currentStep < secretCombination.length) {
+          const current = secretCombination[currentStep];
+          console.log(`Current step ${currentStep + 1}: ${current.toString()} (${rotationsInCurrentDirection} rotations made)`);
+        }
+        break;
+    }
+  }
+
+  private async handleWin() {
     this.timer.stop();
-    const elapsedTime = this.timer.getElapsedTime();
-    const seconds = (elapsedTime / 1000).toFixed(2);
-    console.log(`Vault unlocked in ${seconds} seconds!`);
     
-    // Open the vault door
     await this.vaultDoor.open();
 
-    // Trigger glitter effect
     this.glitterEffect.alpha = 1;
     await this.glitterEffect.play();
 
-    // Use GSAP delayedCall to avoid setTimeout
-    gsap.delayedCall(GAME_CONFIG.SUCCESS_DELAY_SECONDS, () => {
-      this.resetAfterSuccess();
-    });
-  }
-
-  private async resetAfterSuccess() {
+    await wait(GAME_CONFIG.DELAY_SECONDS_AFTER_WINNING);
     await this.vaultDoor.close();
     await this.vaultHandle.spinCrazy();
-    this.generateSecretCombination();
   }
 
-  private async onFailure() {
-    console.log("Wrong combination! Resetting...");
+  private async handleFailure() {
     await this.vaultHandle.spinCrazy();
-    this.generateSecretCombination();
   }
 
   private resize(width: number, height: number) {

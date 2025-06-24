@@ -2,7 +2,7 @@ export const GAME_CONFIG = {
   // Game mechanics
   NUMBER_OF_COMBINATIONS: 3,
   MAX_SPIN_LENGTH: 9,
-  SUCCESS_DELAY_SECONDS: 5,
+  DELAY_SECONDS_AFTER_WINNING: 5,
   
   // Animation durations
   DOOR_OPEN_DURATION: 0.5,
@@ -39,9 +39,13 @@ export const GAME_CONFIG = {
   TIMER_FONT_FAMILY: "Arial"
 } as const;
 
-export const DIRECTIONS = {
-  CLOCKWISE: "clockwise",
-  COUNTERCLOCKWISE: "counterclockwise"
-} as const;
+export enum Direction {
+  CLOCKWISE = "clockwise",
+  COUNTERCLOCKWISE = "counterclockwise"
+}
 
-export type Direction = typeof DIRECTIONS[keyof typeof DIRECTIONS]; 
+export enum GameStatus {
+  NORMAL = "normal",
+  WIN = "win",
+  FAILURE = "failure"
+} 
