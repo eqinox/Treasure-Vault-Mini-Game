@@ -34,7 +34,7 @@ export default class App extends Application {
 
     this.game.start();
 
-    window.addEventListener("resize", this.onResize);
+    window.addEventListener("resize", this.onResize.bind(this));
 
     this.ticker.add((delta) => this.game.update(delta));
   }

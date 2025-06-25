@@ -149,11 +149,23 @@ export default class Game extends Container {
   }
 
   private resize(width: number, height: number) {
-    this.background.width = width;
-    this.background.height = height;
+    // Scale background to maintain the same visual appearance as full screen
+    // Calculate scale based on the smaller dimension to maintain aspect ratio
+    const bgNaturalWidth = this.background.texture.width;
+    const bgNaturalHeight = this.background.texture.height;
 
-    // Size the door to be big enough to cover the vault
-    const doorScale = (height * GAME_CONFIG.DOOR_SCALE_FACTOR) / this.vaultDoor.height;
+    const scaleX = width / bgNaturalWidth;
+    const scaleY = height / bgNaturalHeight;
+    
+    const scale = Math.min(scaleX, scaleY); // Use smaller scale to fit within window
+    
+    this.background.scale.set(scale);
+    this.background.x = (width - bgNaturalWidth * scale) / 2;
+    this.background.y = (height - bgNaturalHeight * scale) / 2;
+
+    // Size the door proportionally to the background scale
+    // Use the background scale as the base for door scaling
+    const doorScale = scale * GAME_CONFIG.DOOR_SCALE_FACTOR;
 
     // Center the door to be in the middle of the vault
     this.vaultDoor.setScale(doorScale);
@@ -161,8 +173,7 @@ export default class Game extends Container {
       (width - this.vaultDoor.width) / GAME_CONFIG.DOOR_POSITION_X_FACTOR,
       (height - this.vaultDoor.height) / GAME_CONFIG.DOOR_POSITION_Y_FACTOR
     );
-
-    // Position handle relative to door
+    
     this.vaultHandle.setScale(doorScale);
     this.vaultHandle.setPosition(
       this.vaultDoor.x + this.vaultDoor.width * GAME_CONFIG.HANDLE_POSITION_X_FACTOR,
