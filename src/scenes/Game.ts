@@ -169,9 +169,10 @@ export default class Game extends Container {
       (height - this.vaultDoor.doorHeight) / GAME_CONFIG.DOOR_POSITION_Y_FACTOR
     );
     
+    // Position glitter in the center of the door
     this.glitterEffect.setPosition(
-      width / GAME_CONFIG.GLITTER_POSITION_X_FACTOR,
-      height / GAME_CONFIG.GLITTER_POSITION_Y_FACTOR
+      this.vaultDoor.x + this.vaultDoor.doorWidth / 2.6,
+      this.vaultDoor.y + this.vaultDoor.doorHeight / 2
     );
 
     // Position timer on the left side

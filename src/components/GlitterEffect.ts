@@ -15,9 +15,7 @@ export class GlitterEffect extends Container {
         const glitter = Sprite.from("/assets/blink.png");
         glitter.alpha = 0;
         glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
-        
-        glitter.x = 0;
-        glitter.y = 0;
+        glitter.anchor.set(0.5);
         
         this.glitterSprites.push(glitter);
         this.addChild(glitter);
