@@ -5,7 +5,6 @@ import { GAME_CONFIG, Direction } from "../utils/config";
 export class VaultHandle extends Container {
     private handle: Sprite;
     private handleShadow: Sprite;
-    private isRotating = false;
 
     constructor() {
         super();
@@ -35,8 +34,6 @@ export class VaultHandle extends Container {
 
     public setupInteraction(onClick: (direction: Direction) => void) {
         this.handle.on('pointerdown', (event: FederatedPointerEvent) => {
-            if (this.isRotating) return;
-
             const clickX = event.global.x;
             const handleCenterX = this.handle.getGlobalPosition().x;
             const direction = clickX < handleCenterX ? Direction.COUNTERCLOCKWISE : Direction.CLOCKWISE;
@@ -46,19 +43,12 @@ export class VaultHandle extends Container {
     }
 
     public async rotate(direction: Direction) {
-        if (this.isRotating) return;
-        this.isRotating = true;
-
         const rotationAmount = direction === Direction.CLOCKWISE ? GAME_CONFIG.HANDLE_ROTATION_AMOUNT : -GAME_CONFIG.HANDLE_ROTATION_AMOUNT;
         const currentRotation = this.handle.rotation;
         const targetRotation = currentRotation + rotationAmount;
 
         // Create a timeline for synchronized animations
-        const tl = gsap.timeline({
-            onComplete: () => {
-                this.isRotating = false;
-            }
-        });
+        const tl = gsap.timeline();
 
         // Animate handle with a quick ease-out
         tl.to(this.handle, {
@@ -81,14 +71,7 @@ export class VaultHandle extends Container {
     }
 
     public async spinCrazy() {
-        if (this.isRotating) return;
-        this.isRotating = true;
-
-        const tl = gsap.timeline({
-            onComplete: () => {
-                this.isRotating = false;
-            }
-        });
+        const tl = gsap.timeline();
 
         // Spin handle like crazy
         tl.to(this.handle, {

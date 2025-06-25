@@ -65,7 +65,7 @@ export default class Game extends Container {
   }
 
   private async onHandleClick(direction: Direction) {
-    await this.vaultDoor.rotateHandle(direction);    
+    this.vaultDoor.rotateHandle(direction);    
     
     const result: CombinationResult = Combination.checkCombination(this.gameState, direction);
     
