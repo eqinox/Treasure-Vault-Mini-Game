@@ -1,7 +1,6 @@
 import { Container, Sprite } from "pixi.js";
 import { SceneUtils } from "../core/App";
 import { VaultDoor } from "../components/VaultDoor";
-import { VaultHandle } from "../components/VaultHandle";
 import { GlitterEffect } from "../components/GlitterEffect";
 import { Timer } from "../components/Timer";
 import { GAME_CONFIG, Direction, GameStatus } from "../utils/config";
@@ -14,7 +13,6 @@ export default class Game extends Container {
   name = "Treasure Vault";
   private background!: Sprite;
   private vaultDoor!: VaultDoor;
-  private vaultHandle!: VaultHandle;
   private glitterEffect!: GlitterEffect;
   private timer!: Timer;
   
@@ -40,8 +38,6 @@ export default class Game extends Container {
     this.background = Sprite.from("/assets/bg.png");
 
     this.vaultDoor = new VaultDoor();
-    this.vaultHandle = new VaultHandle();
-    this.vaultDoor.setHandle(this.vaultHandle);
     
     this.glitterEffect = new GlitterEffect();
     this.glitterEffect.alpha = 0;
@@ -51,10 +47,9 @@ export default class Game extends Container {
     this.resize(window.innerWidth, window.innerHeight);
 
     // Add all elements in correct order
-    this.addChild(this.background, this.vaultDoor, this.vaultHandle, this.glitterEffect, this.timer);
-
-    // Setup handle interaction
-    this.vaultHandle.setupInteraction(this.onHandleClick.bind(this));
+    this.addChild(this.background, this.vaultDoor, this.glitterEffect, this.timer);
+    
+    this.vaultDoor.setupHandleInteraction(this.onHandleClick.bind(this));
 
     this.timer.start();
     this.gameState.secretCombination = Combination.generateSecretCombination();
@@ -70,7 +65,7 @@ export default class Game extends Container {
   }
 
   private async onHandleClick(direction: Direction) {
-    await this.vaultHandle.rotate(direction);    
+    await this.vaultDoor.rotateHandle(direction);    
     
     const result: CombinationResult = Combination.checkCombination(this.gameState, direction);
     
@@ -141,11 +136,11 @@ export default class Game extends Container {
 
     await wait(GAME_CONFIG.DELAY_SECONDS_AFTER_WINNING);
     await this.vaultDoor.close();
-    await this.vaultHandle.spinCrazy();
+    await this.vaultDoor.spinHandleCrazy();
   }
 
   private async handleFailure() {
-    await this.vaultHandle.spinCrazy();
+    await this.vaultDoor.spinHandleCrazy();
   }
 
   private resize(width: number, height: number) {
@@ -170,14 +165,8 @@ export default class Game extends Container {
     // Center the door to be in the middle of the vault
     this.vaultDoor.setScale(doorScale);
     this.vaultDoor.setPosition(
-      (width - this.vaultDoor.width) / GAME_CONFIG.DOOR_POSITION_X_FACTOR,
-      (height - this.vaultDoor.height) / GAME_CONFIG.DOOR_POSITION_Y_FACTOR
-    );
-    
-    this.vaultHandle.setScale(doorScale);
-    this.vaultHandle.setPosition(
-      this.vaultDoor.x + this.vaultDoor.width * GAME_CONFIG.HANDLE_POSITION_X_FACTOR,
-      this.vaultDoor.y + this.vaultDoor.height * GAME_CONFIG.HANDLE_POSITION_Y_FACTOR
+      (width - this.vaultDoor.doorWidth) / GAME_CONFIG.DOOR_POSITION_X_FACTOR,
+      (height - this.vaultDoor.doorHeight) / GAME_CONFIG.DOOR_POSITION_Y_FACTOR
     );
     
     this.glitterEffect.setPosition(

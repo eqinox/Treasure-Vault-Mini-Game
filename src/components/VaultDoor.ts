@@ -1,7 +1,7 @@
 import { Container, Sprite } from "pixi.js";
 import gsap from "gsap";
 import { VaultHandle } from "./VaultHandle";
-import { GAME_CONFIG } from "../utils/config";
+import { GAME_CONFIG, Direction } from "../utils/config";
 
 export class VaultDoor extends Container {
     private door: Sprite;
@@ -9,7 +9,7 @@ export class VaultDoor extends Container {
     private openShadow: Sprite;
     private isOpen = false;
     private closedX: number = 0;
-    private handle: VaultHandle | null = null;
+    private handle: VaultHandle;
 
     constructor() {
         super();
@@ -17,27 +17,51 @@ export class VaultDoor extends Container {
         this.door = Sprite.from("/assets/door.png");
         this.openDoor = Sprite.from("/assets/doorOpen.png");
         this.openShadow = Sprite.from("/assets/doorOpenShadow.png");
+        this.handle = new VaultHandle();
 
         this.openDoor.alpha = 0;
         this.openShadow.alpha = 0;
 
-        this.addChild(this.door, this.openShadow, this.openDoor);
-    }
-
-    public setHandle(handle: VaultHandle) {
-        this.handle = handle;
+        this.addChild(this.door, this.openShadow, this.openDoor, this.handle);
     }
 
     public setScale(scale: number) {
         this.door.scale.set(scale);
         this.openDoor.scale.set(scale);
         this.openShadow.scale.set(scale);
+        this.handle.setScale(scale);
+    }
+
+    public get doorWidth(): number {
+        return this.door.width;
+    }
+
+    public get doorHeight(): number {
+        return this.door.height;
     }
 
     public setPosition(x: number, y: number) {
         this.closedX = x;
         this.x = x;
         this.y = y;
+        
+        // Position handle relative to door - using the same logic as in Game.ts
+        this.handle.setPosition(
+            this.door.width * GAME_CONFIG.HANDLE_POSITION_X_FACTOR,
+            this.door.height * GAME_CONFIG.HANDLE_POSITION_Y_FACTOR
+        );
+    }
+
+    public setupHandleInteraction(onClick: (direction: Direction) => void) {
+        this.handle.setupInteraction(onClick);
+    }
+
+    public async rotateHandle(direction: Direction) {
+        return this.handle.rotate(direction);
+    }
+
+    public async spinHandleCrazy() {
+        return this.handle.spinCrazy();
     }
 
     public async open() {
@@ -51,13 +75,11 @@ export class VaultDoor extends Container {
         const openX = (window.innerWidth - this.openDoor.width * this.openDoor.scale.x) / 2;
 
         // Hide handle first
-        if (this.handle) {
-            tl.to(this.handle, {
-                alpha: 0,
-                duration: GAME_CONFIG.HANDLE_FADE_DURATION,
-                ease: "power2.inOut"
-            });
-        }
+        tl.to(this.handle, {
+            alpha: 0,
+            duration: GAME_CONFIG.HANDLE_FADE_DURATION,
+            ease: "power2.inOut"
+        });
 
         // Simultaneously move door and fade in open state
         tl.to(this, {
@@ -112,13 +134,11 @@ export class VaultDoor extends Container {
         }, "-=0.5");
 
         // Show handle after door is closed
-        if (this.handle) {
-            tl.to(this.handle, {
-                alpha: 1,
-                duration: GAME_CONFIG.HANDLE_FADE_DURATION,
-                ease: "power2.inOut"
-            });
-        }
+        tl.to(this.handle, {
+            alpha: 1,
+            duration: GAME_CONFIG.HANDLE_FADE_DURATION,
+            ease: "power2.inOut"
+        });
 
         return new Promise<void>(resolve => {
             tl.call(() => resolve());
