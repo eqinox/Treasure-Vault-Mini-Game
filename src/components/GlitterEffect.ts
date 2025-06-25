@@ -3,56 +3,38 @@ import gsap from "gsap";
 import { GAME_CONFIG } from "../utils/config";
 
 export class GlitterEffect extends Container {
-    private glitterSprites: Sprite[] = [];
-    private isPlaying = false;
+    private glitter!: Sprite;
 
     constructor() {
         super();
-        this.createGlitterSprites();
-    }
 
-    private createGlitterSprites() {
-        const glitter = Sprite.from("/assets/blink.png");
-        glitter.alpha = 0;
-        glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
-        glitter.anchor.set(0.5);
+        this.glitter = Sprite.from("/assets/blink.png");
+        this.glitter.alpha = 0;
+        this.glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
+        this.glitter.anchor.set(0.5);
         
-        this.glitterSprites.push(glitter);
-        this.addChild(glitter);
+        this.addChild(this.glitter);
     }
 
     public async play() {
-        if (this.isPlaying) return;
-        this.isPlaying = true;
-
         const tl = gsap.timeline();
 
-        const glitter = this.glitterSprites[0];
-        
-        glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
+        this.glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
 
         // Fade in
-        tl.to(glitter, {
+        await tl.to(this.glitter, {
             alpha: 1,
             duration: GAME_CONFIG.GLITTER_FADE_DURATION,
             ease: "power3.in"
         });
 
-        tl.to({}, {duration: GAME_CONFIG.GLITTER_PAUSE_DURATION}); // pause for 0.1 seconds
+        await tl.to({}, {duration: GAME_CONFIG.GLITTER_PAUSE_DURATION}); // pause for 0.1 seconds
 
         // Fade out
-        tl.to(glitter, {
+        await tl.to(this.glitter, {
             alpha: 0,
             duration: GAME_CONFIG.GLITTER_FADE_DURATION,
             ease: "power3.in"
-        });
-
-        // Return promise that resolves when animation is complete
-        return new Promise<void>(resolve => {
-            tl.call(() => {
-                this.isPlaying = false;
-                resolve();
-            });
         });
     }
 
