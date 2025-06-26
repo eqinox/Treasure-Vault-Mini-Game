@@ -23,7 +23,6 @@ export class VaultDoor extends Container {
         this.handle = new VaultHandle();
         this.glitterEffect = new GlitterEffect();
 
-        // Set anchor points to center for scaling animations
         this.door.anchor.set(0.5);
         this.openDoor.anchor.set(0.5);
         this.openShadow.anchor.set(0.5);

@@ -49,49 +49,36 @@ export class VaultHandle extends Container {
         const currentRotation = this.handle.rotation;
         const targetRotation = currentRotation + rotationAmount;
 
-        // Create a timeline for synchronized animations
-        const tl = gsap.timeline();
-
         // Animate handle with a quick ease-out
-        tl.to(this.handle, {
+        gsap.to(this.handle, {
             rotation: targetRotation,
             duration: GAME_CONFIG.HANDLE_ROTATION_DURATION,
             ease: "power2.out"
         });
 
         // Animate shadow with a slight delay and slower movement
-        tl.to(this.handleShadow, {
+        await gsap.to(this.handleShadow, {
             alpha: 0.5,
             rotation: targetRotation,
             duration: GAME_CONFIG.HANDLE_ROTATION_DURATION,
             ease: "power1.out",
-        }, "-=0.50");
-
-        return new Promise<void>(resolve => {
-            tl.call(() => resolve());
         });
     }
 
     public async spinCrazy() {
-        const tl = gsap.timeline();
-
         // Spin handle like crazy
-        tl.to(this.handle, {
+        gsap.to(this.handle, {
             rotation: this.handle.rotation + Math.PI * GAME_CONFIG.HANDLE_SPIN_ROTATIONS,
             duration: GAME_CONFIG.HANDLE_SPIN_DURATION,
             ease: "power2.inOut"
         });
 
         // Shadow follows with more exaggerated delay
-        tl.to(this.handleShadow, {
+        await gsap.to(this.handleShadow, {
             alpha: 0.3,
             rotation: this.handle.rotation + Math.PI * GAME_CONFIG.HANDLE_SPIN_ROTATIONS,
             duration: GAME_CONFIG.HANDLE_SPIN_DURATION,
             ease: "power1.inOut"
-        }, "-=0.99");
-
-        return new Promise<void>(resolve => {
-            tl.call(() => resolve());
         });
     }
 } 

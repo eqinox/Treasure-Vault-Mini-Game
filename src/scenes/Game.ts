@@ -40,7 +40,6 @@ export default class Game extends Container {
     
     this.resize(window.innerWidth, window.innerHeight);
 
-    // Add all elements in correct order (without glitterEffect since it's now a child of vaultDoor)
     this.addChild(this.background, this.vaultDoor, this.timer);
     
     this.vaultDoor.setupHandleInteraction(this.onHandleClick.bind(this));
@@ -157,7 +156,7 @@ export default class Game extends Container {
     );
     
     // Position timer within the background bounds
-    const timerPadding = 20 * scale; // Scale padding with background
+    const timerPadding = 20 * scale;
     const timerX = this.background.x + timerPadding;
     const timerY = this.background.y + timerPadding;
     this.timer.setPosition(timerX, timerY);
