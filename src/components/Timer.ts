@@ -11,9 +11,9 @@ export class Timer extends Container {
         super();
         
         this.timerText = new Text("Time: 00:00", {
-            fontFamily: GAME_CONFIG.TIMER_FONT_FAMILY,
-            fontSize: GAME_CONFIG.TIMER_FONT_SIZE,
-            fill: GAME_CONFIG.TIMER_TEXT_COLOR,
+            fontFamily: "Arial",
+            fontSize: 24,
+            fill: "white",
             align: "left"
         });
         

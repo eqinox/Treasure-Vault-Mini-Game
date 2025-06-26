@@ -1,15 +1,18 @@
 import { Container, Sprite } from "pixi.js";
 import gsap from "gsap";
 import { VaultHandle } from "./VaultHandle";
+import { GlitterEffect } from "./GlitterEffect";
 import { GAME_CONFIG, Direction } from "../utils/config";
+import { wait } from "../utils/wait";
 
 export class VaultDoor extends Container {
     private door: Sprite;
     private openDoor: Sprite;
     private openShadow: Sprite;
     private isOpen = false;
-    private closedX: number = 0;
     private handle: VaultHandle;
+    private originalDoorScale: number = 1; // Store the original door scale
+    private glitterEffect: GlitterEffect;
 
     constructor() {
         super();
@@ -18,14 +21,23 @@ export class VaultDoor extends Container {
         this.openDoor = Sprite.from("/assets/doorOpen.png");
         this.openShadow = Sprite.from("/assets/doorOpenShadow.png");
         this.handle = new VaultHandle();
+        this.glitterEffect = new GlitterEffect();
+
+        // Set anchor points to center for scaling animations
+        this.door.anchor.set(0.5);
+        this.openDoor.anchor.set(0.5);
+        this.openShadow.anchor.set(0.5);
 
         this.openDoor.alpha = 0;
+        this.openDoor.scale.set(0);
+        this.openShadow.scale.set(0);
         this.openShadow.alpha = 0;
 
-        this.addChild(this.door, this.openShadow, this.openDoor, this.handle);
+        this.addChild(this.door, this.openShadow, this.openDoor, this.handle, this.glitterEffect);
     }
 
     public setScale(scale: number) {
+        this.originalDoorScale = scale; // Store the original scale
         this.door.scale.set(scale);
         this.openDoor.scale.set(scale);
         this.openShadow.scale.set(scale);
@@ -41,15 +53,11 @@ export class VaultDoor extends Container {
     }
 
     public setPosition(x: number, y: number) {
-        this.closedX = x;
         this.x = x;
         this.y = y;
-        
-        // Position handle relative to door - using the same logic as in Game.ts
-        this.handle.setPosition(
-            this.door.width * GAME_CONFIG.HANDLE_POSITION_X_FACTOR,
-            this.door.height * GAME_CONFIG.HANDLE_POSITION_Y_FACTOR
-        );
+
+        this.openDoor.x = this.door.x + (this.door.width / 5);
+        this.openShadow.x = this.door.x + (this.door.width / 5);
     }
 
     public setupHandleInteraction(onClick: (direction: Direction) => void) {
@@ -64,84 +72,82 @@ export class VaultDoor extends Container {
         return this.handle.spinCrazy();
     }
 
+    public async playGlitterEffect() {
+        return this.glitterEffect.play();
+    }
+
+    public async fadeOutDoor() {
+        gsap.to(this.door.scale, {
+            x: 0,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
+            ease: "power2.inOut"
+        });
+
+        gsap.to(this.door, {
+            alpha: 0,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
+            ease: "power2.inOut"
+        });
+    }
+
+    public async fadeInOpenDoor() {
+        gsap.to([this.openDoor.scale, this.openShadow.scale], {
+            x: this.originalDoorScale,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
+            ease: "power2.inOut"
+        });
+
+        gsap.to([this.openDoor, this.openShadow], {
+            alpha: 1,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
+            ease: "power2.inOut"
+        });
+    }
+
     public async open() {
         if (this.isOpen) return;
         this.isOpen = true;
 
-        // Create timeline for door opening animation
-        const tl = gsap.timeline();
-
-        // Calculate open position
-        const openX = (window.innerWidth - this.openDoor.width * this.openDoor.scale.x) / 2;
-
         // Hide handle first
-        tl.to(this.handle, {
+        await gsap.to(this.handle, {
             alpha: 0,
             duration: GAME_CONFIG.HANDLE_FADE_DURATION,
             ease: "power2.inOut"
         });
 
-        // Simultaneously move door and fade in open state
-        tl.to(this, {
-            x: openX,
-            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
-            ease: "power2.inOut"
-        });
-
-        // Fade in open door and shadow while fading out closed door
-        tl.to([this.openDoor, this.openShadow], {
-            alpha: 1,
-            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
-            ease: "power2.inOut"
-        }, "-=0.5");
-
-        tl.to(this.door, {
-            alpha: 0,
-            duration: GAME_CONFIG.DOOR_OPEN_DURATION,
-            ease: "power2.inOut"
-        }, "-=0.5");
-
-        // Return promise that resolves when animation is complete
-        return new Promise<void>(resolve => {
-            tl.call(() => resolve());
-        });
+        this.fadeOutDoor();
+        this.fadeInOpenDoor();
+        await wait(1);
+        await this.playGlitterEffect();
     }
 
     public async close() {
         if (!this.isOpen) return;
         this.isOpen = false;
 
-        const tl = gsap.timeline();
-
-        // Move back to closed position while fading
-        tl.to(this, {
-            x: this.closedX,
-            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
-            ease: "power2.inOut"
-        });
-
-        // Fade out open door and shadow while fading in closed door
-        tl.to([this.openDoor, this.openShadow], {
+        gsap.to([this.openDoor, this.openShadow], {
             alpha: 0,
-            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
             ease: "power2.inOut"
-        }, "-=0.5");
-
-        tl.to(this.door, {
+        })
+        
+        gsap.to(this.door, {
             alpha: 1,
-            duration: GAME_CONFIG.DOOR_CLOSE_DURATION,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
             ease: "power2.inOut"
-        }, "-=0.5");
+        })
 
-        // Show handle after door is closed
-        tl.to(this.handle, {
+        await gsap.to(this.door.scale, {
+            x: this.originalDoorScale,
+            duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
+            ease: "power2.inOut"
+        })
+
+
+        await gsap.to(this.handle, {
             alpha: 1,
             duration: GAME_CONFIG.HANDLE_FADE_DURATION,
             ease: "power2.inOut"
-        });
-
-        return new Promise<void>(resolve => {
-            tl.call(() => resolve());
         });
     }
 } 

@@ -1,5 +1,6 @@
 import { Container, Sprite } from "pixi.js";
 import gsap from "gsap";
+import { wait } from "../utils/wait";
 import { GAME_CONFIG } from "../utils/config";
 
 export class GlitterEffect extends Container {
@@ -10,36 +11,50 @@ export class GlitterEffect extends Container {
 
         this.glitter = Sprite.from("/assets/blink.png");
         this.glitter.alpha = 0;
-        this.glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
-        this.glitter.anchor.set(0.5);
-        
+        this.glitter.anchor.set(0.5, 0.5);
+        this.x = -100;
+        this.y = -30;
+
         this.addChild(this.glitter);
     }
 
     public async play() {
-        const tl = gsap.timeline();
+        // Start small and fade in
+        this.glitter.scale.set(0.3);
+        this.glitter.alpha = 0.1;
+        
+        // Grow to full size
+        gsap.to(this.glitter.scale, {
+            x: 1,
+            y: 1,
+            duration: GAME_CONFIG.GLITTER_DURATION,
+            ease: "power2.out"
+        });
 
-        this.glitter.scale.set(GAME_CONFIG.GLITTER_SCALE);
-
-        // Fade in
-        await tl.to(this.glitter, {
+        await gsap.to(this.glitter, {
             alpha: 1,
-            duration: GAME_CONFIG.GLITTER_FADE_DURATION,
-            ease: "power3.in"
+            duration: GAME_CONFIG.GLITTER_DURATION,
+            ease: "power2.out"
         });
 
-        await tl.to({}, {duration: GAME_CONFIG.GLITTER_PAUSE_DURATION}); // pause for 0.1 seconds
+        await wait(GAME_CONFIG.GLITTER_PAUSE_DURATION);
 
-        // Fade out
-        await tl.to(this.glitter, {
+        // Shrink back to 0 and fade out
+        gsap.to(this.glitter.scale, {
+            x: 0,
+            y: 0,
+            duration: GAME_CONFIG.GLITTER_DURATION,
+            ease: "power2.in"
+        });
+
+        await gsap.to(this.glitter, {
             alpha: 0,
-            duration: GAME_CONFIG.GLITTER_FADE_DURATION,
-            ease: "power3.in"
+            duration: GAME_CONFIG.GLITTER_DURATION,
+            ease: "power2.in"
         });
-    }
 
-    public setPosition(x: number, y: number) {        
-        this.x = x;
-        this.y = y;
+        // Reset for next use
+        this.glitter.scale.set(0);
+        this.glitter.alpha = 0;
     }
 } 

@@ -12,9 +12,11 @@ export class VaultHandle extends Container {
         this.handleShadow = Sprite.from("/assets/handleShadow.png");
         this.handle = Sprite.from("/assets/handle.png");
         
-        // Set anchor points to center for rotation
         this.handle.anchor.set(0.5);
         this.handleShadow.anchor.set(0.5);
+
+        this.handle.x = -23;
+        this.handleShadow.x = -23;
 
         this.addChild(this.handleShadow, this.handle);
 
@@ -59,7 +61,7 @@ export class VaultHandle extends Container {
 
         // Animate shadow with a slight delay and slower movement
         tl.to(this.handleShadow, {
-            alpha: GAME_CONFIG.SHADOW_ALPHA,
+            alpha: 0.5,
             rotation: targetRotation,
             duration: GAME_CONFIG.HANDLE_ROTATION_DURATION,
             ease: "power1.out",

@@ -1,7 +1,6 @@
 import { Container, Sprite } from "pixi.js";
 import { SceneUtils } from "../core/App";
 import { VaultDoor } from "../components/VaultDoor";
-import { GlitterEffect } from "../components/GlitterEffect";
 import { Timer } from "../components/Timer";
 import { GAME_CONFIG, Direction, GameStatus } from "../utils/config";
 import { Combination } from "../utils/types/Combination";
@@ -13,7 +12,6 @@ export default class Game extends Container {
   name = "Treasure Vault";
   private background!: Sprite;
   private vaultDoor!: VaultDoor;
-  private glitterEffect!: GlitterEffect;
   private timer!: Timer;
   
   // Game state
@@ -25,7 +23,7 @@ export default class Game extends Container {
   };
 
   constructor(protected utils: SceneUtils) {
-    super();
+    super();    
   }
 
   async load() {
@@ -36,18 +34,14 @@ export default class Game extends Container {
     this.removeChildren();
 
     this.background = Sprite.from("/assets/bg.png");
-
     this.vaultDoor = new VaultDoor();
-    
-    this.glitterEffect = new GlitterEffect();
-    this.glitterEffect.alpha = 0;
     
     this.timer = new Timer();
     
     this.resize(window.innerWidth, window.innerHeight);
 
-    // Add all elements in correct order
-    this.addChild(this.background, this.vaultDoor, this.glitterEffect, this.timer);
+    // Add all elements in correct order (without glitterEffect since it's now a child of vaultDoor)
+    this.addChild(this.background, this.vaultDoor, this.timer);
     
     this.vaultDoor.setupHandleInteraction(this.onHandleClick.bind(this));
 
@@ -131,9 +125,6 @@ export default class Game extends Container {
     
     await this.vaultDoor.open();
 
-    this.glitterEffect.alpha = 1;
-    await this.glitterEffect.play();
-
     await wait(GAME_CONFIG.DELAY_SECONDS_AFTER_WINNING);
     await this.vaultDoor.close();
     await this.vaultDoor.spinHandleCrazy();
@@ -158,23 +149,13 @@ export default class Game extends Container {
     this.background.x = (width - bgNaturalWidth * scale) / 2;
     this.background.y = (height - bgNaturalHeight * scale) / 2;
 
-    // Size the door proportionally to the background scale
-    // Use the background scale as the base for door scaling
-    const doorScale = scale * GAME_CONFIG.DOOR_SCALE_FACTOR;
-
     // Center the door to be in the middle of the vault
-    this.vaultDoor.setScale(doorScale);
+    this.vaultDoor.setScale(scale);
     this.vaultDoor.setPosition(
-      (width - this.vaultDoor.doorWidth) / GAME_CONFIG.DOOR_POSITION_X_FACTOR,
-      (height - this.vaultDoor.doorHeight) / GAME_CONFIG.DOOR_POSITION_Y_FACTOR
+      width  / 2,
+      height  / 2
     );
     
-    // Position glitter in the center of the door
-    this.glitterEffect.setPosition(
-      this.vaultDoor.x + this.vaultDoor.doorWidth / 2.6,
-      this.vaultDoor.y + this.vaultDoor.doorHeight / 2
-    );
-
     // Position timer on the left side
     this.timer.setPosition(GAME_CONFIG.TIMER_PADDING, GAME_CONFIG.TIMER_PADDING);
   }
