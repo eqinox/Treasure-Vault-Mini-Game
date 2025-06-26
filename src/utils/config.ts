@@ -12,9 +12,6 @@ export const GAME_CONFIG = {
   GLITTER_PAUSE_DURATION: 0.1,
   HANDLE_FADE_DURATION: 0.3,
   
-  // UI positioning
-  TIMER_PADDING: 20,
-  
   // Visual effects
   HANDLE_ROTATION_AMOUNT: Math.PI / 3,
   HANDLE_SPIN_ROTATIONS: 4,

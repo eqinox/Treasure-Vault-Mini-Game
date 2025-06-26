@@ -156,8 +156,11 @@ export default class Game extends Container {
       height  / 2
     );
     
-    // Position timer on the left side
-    this.timer.setPosition(GAME_CONFIG.TIMER_PADDING, GAME_CONFIG.TIMER_PADDING);
+    // Position timer within the background bounds
+    const timerPadding = 20 * scale; // Scale padding with background
+    const timerX = this.background.x + timerPadding;
+    const timerY = this.background.y + timerPadding;
+    this.timer.setPosition(timerX, timerY);
   }
 
   onResize(width: number, height: number) {
