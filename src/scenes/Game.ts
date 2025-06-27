@@ -4,9 +4,8 @@ import { VaultDoor } from "../components/VaultDoor";
 import { Timer } from "../components/Timer";
 import { GAME_CONFIG, Direction, GameStatus } from "../utils/config";
 import { Combination } from "../utils/types/Combination";
-import { GameState } from "../utils/types/GameState";
-import { CombinationResult } from "../utils/types/CombinationResult";
-import { wait } from "../utils/wait";
+import { GameState, CombinationResult } from "../utils/types/index";
+import { wait } from "../utils/index";
 
 export default class Game extends Container {
   name = "Treasure Vault";
