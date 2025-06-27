@@ -3,7 +3,7 @@ import gsap from "gsap";
 import { VaultHandle } from "./VaultHandle";
 import { GlitterEffect } from "./GlitterEffect";
 import { GAME_CONFIG, Direction } from "../utils/config";
-import { wait } from "../utils/wait";
+import { wait } from "../utils/index";
 
 export class VaultDoor extends Container {
     private door: Sprite;
@@ -13,6 +13,7 @@ export class VaultDoor extends Container {
     private handle: VaultHandle;
     private originalDoorScale: number = 1; // Store the original door scale
     private glitterEffect: GlitterEffect;
+    private initialDoorX: number = 0;
 
     constructor() {
         super();
@@ -53,6 +54,7 @@ export class VaultDoor extends Container {
 
     public setPosition(x: number, y: number) {
         this.x = x;
+        this.initialDoorX = this.door.x;
         this.y = y;
 
         this.openDoor.x = this.door.x + (this.door.width / 5);
@@ -84,6 +86,7 @@ export class VaultDoor extends Container {
 
         gsap.to(this.door, {
             alpha: 0,
+            x: this.door.x + (this.door.width / 2),
             duration: GAME_CONFIG.DOOR_ANIMATION_DURATION,
             ease: "power2.inOut"
         });
@@ -119,10 +122,13 @@ export class VaultDoor extends Container {
         await wait(1);
         await this.playGlitterEffect();
     }
-
+    
     public async close() {
         if (!this.isOpen) return;
         this.isOpen = false;
+
+        // reset door position
+        this.door.x = this.initialDoorX;
 
         gsap.to([this.openDoor, this.openShadow], {
             alpha: 0,

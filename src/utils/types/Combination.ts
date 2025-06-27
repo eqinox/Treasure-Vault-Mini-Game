@@ -1,6 +1,5 @@
 import { GAME_CONFIG, Direction } from "../config";
-import { GameState } from "./GameState";
-import { CombinationResult } from "./CombinationResult";
+import { GameState, CombinationResult } from "./index";
 
 export class Combination {
   constructor(

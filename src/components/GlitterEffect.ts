@@ -1,6 +1,6 @@
 import { Container, Sprite } from "pixi.js";
 import gsap from "gsap";
-import { wait } from "../utils/wait";
+import { wait } from "../utils/index";
 import { GAME_CONFIG } from "../utils/config";
 
 export class GlitterEffect extends Container {
